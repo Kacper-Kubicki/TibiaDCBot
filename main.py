@@ -200,23 +200,38 @@ async def book(interaction: discord.Interaction, dummy: str, date: str, start: s
     start_hour = int(start.split(":")[0])
     end_hour = int(end.split(":")[0])
 
-    if start_hour >= end_hour:
-        await interaction.response.send_message("❌ Błędny przedział czasowy", ephemeral=True)
-        return
+    # pozwalamy na przejście przez północ
+    same_day = True
+
+    if end_hour <= start_hour:
+        same_day = False
+
+    user_start = datetime.strptime(f"{date} {start}", "%Y-%m-%d %H:%M")
+    user_end = datetime.strptime(f"{date} {end}", "%Y-%m-%d %H:%M")
+
+    if not same_day:
+        user_end += timedelta(days=1)
 
     for b in bookings:
-        if b["date"] == date and b["dummy"] == dummy:
-            if not (end_hour <= b["start"] or start_hour >= b["end"]):
-                await interaction.response.send_message("❌ Podana data jest już zarezerwowana", ephemeral=True)
-                return
+        if b["dummy"] != dummy:
+            continue
+
+        existing_start = datetime.strptime(f"{b['date']} {b['start']}:00", "%Y-%m-%d %H:%M")
+        existing_end = datetime.strptime(f"{b['date']} {b['end']}:00", "%Y-%m-%d %H:%M")
+
+        # jeśli rezerwacja przechodziła przez północ
+        if b["end"] <= b["start"]:
+            existing_end += timedelta(days=1)
+
+        # sprawdzanie overlap
+        if not (user_end <= existing_start or user_start >= existing_end):
+            await interaction.response.send_message("❌ Podana data jest już zarezerwowana", ephemeral=True)
+            return
 
     if booking_start and booking_end:
 
         start_range = datetime.strptime(booking_start, "%Y-%m-%d %H:%M")
         end_range = datetime.strptime(booking_end, "%Y-%m-%d %H:%M")
-
-        user_start = datetime.strptime(f"{date} {start}", "%Y-%m-%d %H:%M")
-        user_end = datetime.strptime(f"{date} {end}", "%Y-%m-%d %H:%M")
 
         if user_start < start_range or user_end > end_range:
             await interaction.response.send_message(
