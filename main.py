@@ -13,7 +13,10 @@ ALLOWED_GUILDS = [
     1419989925776068740 # perla
 ]
 
-channels = {}
+channels = {
+    "1491732541206429716": 1498770780555841637, #dev
+    "1419989925776068740": 1499513918618599655 #perla
+}
 
 ADMIN_IDS = [   # ID adminow
     470943158910320640, #ja
@@ -28,7 +31,10 @@ TEST_GUILD = discord.Object(id=GUILD_ID)
 DUMMIES = [
     "Kukła 1",
     "Kukła 2",
-    "Kukła 3"
+    "Kukła 3",
+    "Kukła 4",
+    "Kukła 5",
+    "Kukła 6"
 ]
 
 
@@ -438,8 +444,9 @@ async def update_list(channel):
 @client.event
 async def on_ready():
     load_data()
-    await tree.sync()
-    #await tree.sync(guild=TEST_GUILD)
+    for guild_id in ALLOWED_GUILDS:
+        guild = discord.Object(id=guild_id)
+        await tree.sync(guild=guild)
     print(f"Zalogowano jako {client.user}")
 
 client.run(TOKEN)
